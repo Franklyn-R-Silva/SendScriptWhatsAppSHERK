@@ -1,26 +1,37 @@
-async function enviarScript(scriptText){
-	const lines = scriptText.split(/[\n\t]+/).map(line => line.trim()).filter(line => line);
-	main = document.querySelector("#main"),
-	textarea = main.querySelector(`div[contenteditable="true"]`)
-	
-	if(!textarea) throw new Error("Não há uma conversa aberta")
-	
-	for(const line of lines){
-		console.log(line)
-	
-		textarea.focus();
-		document.execCommand('insertText', false, line);
-		textarea.dispatchEvent(new Event('change', {bubbles: true}));
-	
-		setTimeout(() => {
-			(main.querySelector(`[data-testid="send"]`) || main.querySelector(`[data-icon="send"]`)).click();
-		}, 100);
-		
-		if(lines.indexOf(line) !== lines.length - 1) await new Promise(resolve => setTimeout(resolve, 250));
-	}
-	
-	return lines.length;
+async function enviarScript(scriptText) {
+  const lines = scriptText.split(/[\n\t]+/).map(l => l.trim()).filter(Boolean);
+
+  const main = document.querySelector("#main");
+  const textarea = main.querySelector('[contenteditable="true"]');
+
+  if (!textarea) throw new Error("Não há uma conversa aberta");
+
+  for (const line of lines) {
+    console.log("Sending:", line);
+    textarea.focus();
+    const event = new InputEvent('input', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertText',
+      data: line
+    });
+    textarea.textContent = line;
+    textarea.dispatchEvent(event);
+    const sendBtn = main.querySelector('[data-testid="send"]') 
+                 || main.querySelector('[data-icon="send"]') 
+                 || main.querySelector('[aria-label="Send"]');
+
+    if (sendBtn) sendBtn.click();
+
+    // wait a bit before next line
+    if (line !== lines.at(-1)) {
+      await new Promise(r => setTimeout(r, 400));
+    }
+  }
+
+  return lines.length;
 }
+
 
 enviarScript(`
 BEE Movie
